@@ -51,6 +51,23 @@ export function createUser(req,res){
     )
 }
 
+export async function getUsers(req, res) {
+    if (!isAdmin(req)) {
+        return res.status(403).json({ message: "Access denied. Admins only." })
+    }
+
+    try {
+        const users = await User.find({}, { password: 0 }) // exclude passwords
+        res.json(users)
+    } catch (error) {
+        res.status(500).json({ message: "Failed to fetch users" })
+    }
+}
+
+
+
+
+
 export function loginUser(req,res){
     const email = req.body.email
     const password = req.body.password

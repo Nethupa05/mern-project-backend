@@ -9,6 +9,7 @@ import studentRouter from './routes/studentRouter.js';
 import productRouter from './routes/productRouter.js';
 import userRouter from './routes/userRouter.js';
 import orderRouter from './routes/orderRouter.js';
+import contactRoutes from "./routes/contactRoutes.js"
 
 
 dotenv.config();
@@ -56,6 +57,7 @@ app.use("/api/students", studentRouter)
 app.use("/api/products", productRouter)
 app.use("/api/users", userRouter)
 app.use("/api/orders", orderRouter)
+app.use("/api/contact", contactRoutes)
 
 //mongodb+srv://admin:1234@cluster0.fh1ctxn.mongodb.net/?appName=Cluster0
 
