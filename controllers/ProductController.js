@@ -200,3 +200,80 @@ export async function getProductsById(req,res){
         })
     }
 }
+
+
+// controllers/productController.js
+export async function searchProducts(req, res) {
+    const { q } = req.query;
+    
+    if (!q || q.trim() === '') {
+        return res.json([]);
+    }
+
+    try {
+        // Search in name, description, and category
+        // Using regex for case-insensitive partial matching
+        const products = await Product.find({
+            $or: [
+                { name: { $regex: q, $options: 'i' } },
+                { description: { $regex: q, $options: 'i' } },
+                { category: { $regex: q, $options: 'i' } },
+                { brand: { $regex: q, $options: 'i' } }
+            ],
+            // Optionally filter only available products
+            isAvailable: true
+        })
+        .limit(10) // Limit to 10 results for the dropdown
+        .select('name price images category brand') // Select only needed fields
+        .lean(); // Convert to plain JavaScript objects for better performance
+
+        res.json(products);
+    } catch (error) {
+        console.error('Search error:', error);
+        res.status(500).json({ message: "Search failed", error: error.message });
+    }
+}
+
+// For full search results page (with pagination)
+export async function searchProductsFull(req, res) {
+    const { q, page = 1, limit = 20 } = req.query;
+    
+    if (!q || q.trim() === '') {
+        return res.json({ products: [], total: 0, pages: 0 });
+    }
+
+    try {
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+        
+        // Create search query
+        const searchQuery = {
+            $or: [
+                { name: { $regex: q, $options: 'i' } },
+                { description: { $regex: q, $options: 'i' } },
+                { category: { $regex: q, $options: 'i' } },
+                { brand: { $regex: q, $options: 'i' } }
+            ],
+            isAvailable: true
+        };
+
+        // Get total count for pagination
+        const total = await Product.countDocuments(searchQuery);
+        
+        // Get paginated results
+        const products = await Product.find(searchQuery)
+            .skip(skip)
+            .limit(parseInt(limit))
+            .sort({ createdAt: -1 }) // Newest first
+            .lean();
+
+        res.json({
+            products,
+            total,
+            page: parseInt(page),
+            pages: Math.ceil(total / parseInt(limit))
+        });
+    } catch (error) {
+        console.error('Full search error:', error);
+        res.status(500).json({ message: "Search failed", error: error.message });
+    }
+}
